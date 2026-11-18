@@ -1,6 +1,11 @@
+from django.contrib.auth.views import LogoutView
 from django.urls import path
-from django.views.generic import RedirectView
+
+from . import views
+from .auth import ThrottledLoginView
 
 urlpatterns = [
-    path('', RedirectView.as_view(pattern_name='admin:index', permanent=False), name='dashboard'),
+    path('', views.dashboard, name='dashboard'),
+    path('entrar/', ThrottledLoginView.as_view(), name='login'),
+    path('sair/', LogoutView.as_view(), name='logout'),
 ]

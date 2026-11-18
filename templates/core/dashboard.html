@@ -1,0 +1,1 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SocialPet</title></head><body><main><h1>SocialPet</h1><p>Olá, {{ request.user.get_full_name|default:request.user.username }}.</p><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Sair</button></form></main></body></html>

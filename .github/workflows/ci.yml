@@ -1,0 +1,46 @@
+name: CI SocialPet
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build e testes automatizados
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DEBUG: "False"
+      SECRET_KEY: ci-socialpet-only-not-for-production-2026-secure-test-key
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      SECURE_SSL_REDIRECT: "False"
+
+    steps:
+      - name: Baixar código-fonte
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Verificar configurações do Django
+        run: python manage.py check
+
+      - name: Validar migrações
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Executar testes automatizados
+        run: python manage.py test --verbosity 2
+
+      - name: Validar arquivos estáticos
+        run: python manage.py collectstatic --noinput

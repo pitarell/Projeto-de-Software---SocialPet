@@ -73,4 +73,33 @@ def movement_form(request, movement_type):
     title = 'Registrar doação' if movement_type == Movement.Type.IN else 'Registrar saída'
     return render(request, 'core/movement_form.html', {'form': form, 'title': title, 'movement_type': movement_type})
 
+
+@login_required
+def stock(request):
+    products = Product.objects.select_related('category')
+    search = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '')
+    status = request.GET.get('status', '')
+    if search:
+        products = products.filter(name__icontains=search)
+    if category.isdigit():
+        products = products.filter(category_id=category)
+    if status == 'active':
+        products = products.filter(is_active=True)
+    elif status == 'inactive':
+        products = products.filter(is_active=False)
+    return render(request, 'core/stock.html', {
+        'products': products, 'categories': Category.objects.filter(is_active=True),
+        'filters': {'q': search, 'category': category, 'status': status},
+    })
+
+
+@login_required
+def movement_history(request):
+    movements = Movement.objects.select_related('product', 'product__category', 'user')
+    movement_type = request.GET.get('type', '')
+    if movement_type in (Movement.Type.IN, Movement.Type.OUT):
+        movements = movements.filter(type=movement_type)
+    return render(request, 'core/movement_history.html', {'movements': movements[:500], 'selected_type': movement_type})
+
 # Create your views here.

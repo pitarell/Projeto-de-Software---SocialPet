@@ -56,4 +56,34 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+
+class Movement(models.Model):
+    class Type(models.TextChoices):
+        IN = 'ENTRADA', 'Entrada'
+        OUT = 'SAIDA', 'Saída'
+
+    class Reason(models.TextChoices):
+        DONATION = 'DOACAO', 'Doação'
+        PURCHASE = 'COMPRA', 'Compra'
+        CONSUMPTION = 'CONSUMO', 'Consumo'
+        DISCARD = 'DESCARTE', 'Descarte'
+        OTHER = 'OUTRO', 'Outro'
+
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name='movements', verbose_name='produto')
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='movements', verbose_name='responsável')
+    type = models.CharField('tipo', max_length=7, choices=Type.choices)
+    quantity = models.DecimalField('quantidade', max_digits=12, decimal_places=2)
+    reason = models.CharField('motivo', max_length=8, choices=Reason.choices)
+    occurred_at = models.DateTimeField('data da movimentação', auto_now_add=True)
+    notes = models.TextField('observações', blank=True, max_length=1000)
+
+    class Meta:
+        ordering = ('-occurred_at', '-pk')
+        verbose_name = 'movimentação'
+        verbose_name_plural = 'movimentações'
+        constraints = [models.CheckConstraint(condition=models.Q(quantity__gt=0), name='movement_quantity_positive')]
+
+    def __str__(self):
+        return f'{self.get_type_display()} de {self.quantity} {self.product.unit} — {self.product}'
+
 # Create your models here.

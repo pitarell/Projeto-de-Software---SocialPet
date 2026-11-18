@@ -14,4 +14,6 @@ urlpatterns = [
     path('produtos/', views.product_list, name='product_list'),
     path('produtos/novo/', views.product_form, name='product_create'),
     path('produtos/<int:pk>/editar/', views.product_form, name='product_edit'),
+    path('doacoes/nova/', views.movement_form, {'movement_type': 'ENTRADA'}, name='donation_create'),
+    path('saidas/nova/', views.movement_form, {'movement_type': 'SAIDA'}, name='withdrawal_create'),
 ]

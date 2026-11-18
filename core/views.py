@@ -1,10 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .auth import manager_required
-from .forms import CategoryForm, ProductForm
-from .models import Category, Product
+from .forms import CategoryForm, MovementForm, ProductForm
+from .models import Category, Movement, Product
+from .services import register_movement
 
 
 @login_required
@@ -47,5 +49,28 @@ def product_form(request, pk=None):
         messages.success(request, 'Produto salvo com sucesso.')
         return redirect('product_list')
     return render(request, 'core/form.html', {'form': form, 'title': 'Produto'})
+
+
+@login_required
+def movement_form(request, movement_type):
+    if movement_type not in (Movement.Type.IN, Movement.Type.OUT):
+        return redirect('dashboard')
+    form = MovementForm(request.POST or None, movement_type=movement_type)
+    if form.is_valid():
+        try:
+            register_movement(
+                product=form.cleaned_data['product'], user=request.user,
+                movement_type=movement_type, quantity=form.cleaned_data['quantity'],
+                reason=Movement.Reason.DONATION if movement_type == Movement.Type.IN else Movement.Reason.CONSUMPTION,
+                notes=form.cleaned_data['notes'],
+            )
+        except ValidationError as error:
+            form.add_error('quantity', error.message)
+        else:
+            label = 'Doação' if movement_type == Movement.Type.IN else 'Saída'
+            messages.success(request, f'{label} registrada com sucesso.')
+            return redirect('stock')
+    title = 'Registrar doação' if movement_type == Movement.Type.IN else 'Registrar saída'
+    return render(request, 'core/movement_form.html', {'form': form, 'title': title, 'movement_type': movement_type})
 
 # Create your views here.
